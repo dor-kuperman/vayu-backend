@@ -31,11 +31,7 @@ const getUserByField = async (
 };
 
 export const getUsers = async (req: Request, res: Response) => {
-    const { offset, limit } = req.query;
-    return getUserByField(req, res, {
-        offset: offset as string,
-        limit: limit as string,
-    });
+    return getUserByField(req, res, req.query);
 };
 
 export const getUserByName = async (req: Request, res: Response) => {
