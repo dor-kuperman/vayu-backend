@@ -4,68 +4,46 @@ import { userStatuses } from "../app-types";
 import { ObjectId } from "mongodb";
 import { executeMongoBulk } from "../utils/mongo-bulk";
 
-export const getUsers = async (req: Request, res: Response) => {
+const getUserByField = async (
+    req: Request,
+    res: Response,
+    { field, limit, offset }: { field?: string; limit?: string; offset?: string }
+) => {
     try {
-        const { offset, limit } = req.query;
-        // TODO: log the query when implemented
-        console.log("start getUsers", { offset, limit });
+        const { value } = req.query;
+        console.log(`start getUserBy ${field} ${value}`);
 
         const limitToUse = Number(limit) || 100;
 
         const offsetToUse = Number(offset) || 0;
 
-        // TODO: Add here future query
-        const query = {};
-
         const users = await dbUsers
-            .find(query)
+            .find(field ? { [field]: value } : {})
             .limit(limitToUse)
             .skip(offsetToUse)
             .toArray();
 
-        const totalUsers = await dbUsers.countDocuments(query);
-
-        return res.send({ users, totalUsers });
+        return res.send(users);
     } catch (error) {
-        console.log("getUsers error:", error);
-        return res.send({ users: [], totalUsers: 0 });
+        console.log(`getUserBy${field} error:`, error);
+        return res.send([]);
     }
+};
+
+export const getUsers = async (req: Request, res: Response) => {
+    const { offset, limit } = req.query;
+    return getUserByField(req, res, {
+        offset: offset as string,
+        limit: limit as string,
+    });
 };
 
 export const getUserByName = async (req: Request, res: Response) => {
-    try {
-        const { name } = req.query;
-        console.log("start getUserByEmail");
-
-        if (!name) {
-            return res.send("No name was sent");
-        }
-
-        const users = await dbUsers.find({ name }).toArray();
-
-        return res.send(users);
-    } catch (error) {
-        console.log("getUserByEmail error:", error);
-        return res.send([]);
-    }
+    return getUserByField(req, res, { field: "name" });
 };
 
 export const getUserByEmail = async (req: Request, res: Response) => {
-    try {
-        const { email } = req.query;
-        console.log("start getUserByEmail");
-
-        if (!email) {
-            return res.send("No email was sent");
-        }
-
-        const users = await dbUsers.find({ email }).toArray();
-
-        return res.send(users);
-    } catch (error) {
-        console.log("getUserByEmail error:", error);
-        return res.send([]);
-    }
+    return getUserByField(req, res, { field: "email" });
 };
 
 export const updateUsersStatus = async (req: Request, res: Response) => {
@@ -104,7 +82,7 @@ export const updateUsersStatus = async (req: Request, res: Response) => {
             }
         }
 
-        const bulkRes = await executeMongoBulk(usersBulk)
+        const bulkRes = await executeMongoBulk(usersBulk);
 
         return res.send(bulkRes);
     } catch (error) {
