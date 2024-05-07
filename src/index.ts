@@ -9,9 +9,6 @@ export const app = express();
 
 dotenv.config();
 
-app.get("/", (req, res) => {
-    res.send("Main route");
-});
 app.use(bodyParser.json())
 app.listen(3000, () => {
     console.log(`App is listening on port ${3000}`);
